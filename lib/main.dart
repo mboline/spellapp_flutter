@@ -7,12 +7,17 @@ void main() => runApp(const SpellingRulesApp());
 
 class SpellingRulesApp extends StatelessWidget {
   const SpellingRulesApp({super.key});
+  
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Spelling Rules Practice',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(fontFamily: 'Roboto', useMaterial3: true),
+      theme: ThemeData(
+        fontFamily: 'Roboto', 
+        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1A237E)),
+      ),
       home: const RuleSelectionScreen(),
     );
   }
@@ -53,12 +58,15 @@ class _RuleSelectionScreenState extends State<RuleSelectionScreen> {
   void _startSession() {
     final selectedRules = rules.where((r) => r.isSelected).toList();
     if (selectedRules.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Select at least one rule.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Select at least one rule.'))
+      );
     } else {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => PracticeScreen(selectedRules: selectedRules)),
       ).then((_) {
+        // Reset checkboxes after session
         for (var rule in rules) rule.isSelected = false;
         _saveProgress();
         setState(() {});
@@ -77,11 +85,15 @@ class _RuleSelectionScreenState extends State<RuleSelectionScreen> {
       backgroundColor: Colors.white,
       body: Column(
         children: [
-          // FIXED HEADER
+          // FIXED HEADER SECTION (Non-scrolling)
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Image.asset('assets/images/banner.gif', width: double.infinity, fit: BoxFit.fitWidth),
+              Image.asset(
+                'assets/images/banner.gif', 
+                width: double.infinity, 
+                fit: BoxFit.fitWidth,
+              ),
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 20, 20, 10),
                 child: Column(
@@ -89,16 +101,25 @@ class _RuleSelectionScreenState extends State<RuleSelectionScreen> {
                   children: [
                     Text(
                       'Spelling Rules Flashcards',
-                      style: TextStyle(fontSize: isMobile ? 24 : 32, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: isMobile ? 24 : 32, 
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black87,
+                      ),
                     ),
                     const SizedBox(height: 4),
                     const Text(
                       'Brought to you by Phonogram University', 
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, decoration: TextDecoration.underline, color: Color(0xFF1A237E))
+                      style: TextStyle(
+                        fontSize: 16, 
+                        fontWeight: FontWeight.bold, 
+                        decoration: TextDecoration.underline, 
+                        color: Color(0xFF1A237E)
+                      )
                     ),
                     const SizedBox(height: 15),
                     SizedBox(
-                      width: isMobile ? double.infinity : 200,
+                      width: isMobile ? double.infinity : 220,
                       child: ElevatedButton(
                         onPressed: _startSession,
                         style: ElevatedButton.styleFrom(
@@ -106,7 +127,10 @@ class _RuleSelectionScreenState extends State<RuleSelectionScreen> {
                           padding: const EdgeInsets.symmetric(vertical: 18),
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
                         ),
-                        child: const Text('Start Session', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                        child: const Text(
+                          'Start Session', 
+                          style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)
+                        ),
                       ),
                     ),
                   ],
@@ -116,7 +140,7 @@ class _RuleSelectionScreenState extends State<RuleSelectionScreen> {
             ],
           ),
 
-          // SCROLLABLE LIST/TABLE
+          // SCROLLABLE BODY SECTION
           Expanded(
             child: SingleChildScrollView(
               child: Column(
@@ -129,7 +153,6 @@ class _RuleSelectionScreenState extends State<RuleSelectionScreen> {
                       style: TextStyle(color: Colors.grey.shade600, fontSize: 14),
                     ),
                   ),
-                  // Left-justify the content
                   Align(
                     alignment: Alignment.topLeft,
                     child: isMobile ? _buildMobileList() : _buildDesktopTable(),
@@ -144,56 +167,16 @@ class _RuleSelectionScreenState extends State<RuleSelectionScreen> {
     );
   }
 
-  Widget _buildMobileList() {
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: rules.length,
-      itemBuilder: (context, index) {
-        final rule = rules[index];
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 6),
-          child: Card(
-            elevation: 0,
-            shape: RoundedRectangleBorder(side: BorderSide(color: Colors.grey.shade200), borderRadius: BorderRadius.circular(12)),
-            child: Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Checkbox(
-                        value: rule.isSelected,
-                        onChanged: (val) => setState(() {
-                          rule.isSelected = val!;
-                          if (rule.isSelected && rule.knowledgeLevel == 'Removed') rule.knowledgeLevel = 'Not Known';
-                        }),
-                      ),
-                      Expanded(child: Text(rule.words, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17))),
-                      _buildStatusBadge(rule.knowledgeLevel),
-                    ],
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 48, bottom: 5, right: 10),
-                    child: Text(rule.description, style: TextStyle(color: Colors.black.withOpacity(0.7), fontSize: 14)),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
+  // --- TABLET/DESKTOP TABLE (With Dynamic Height Fix) ---
   Widget _buildDesktopTable() {
     return Padding(
-      padding: const EdgeInsets.only(left: 10), // Padding to match the "Choose rules" text
+      padding: const EdgeInsets.only(left: 10),
       child: DataTable(
-        headingRowHeight: 40,
+        headingRowHeight: 45,
         horizontalMargin: 10,
-        columnSpacing: 40, // Tightened up from the default to keep it left-justified
+        columnSpacing: 40,
+        dataRowMinHeight: 50,
+        dataRowMaxHeight: double.infinity, // Allows row to expand for multi-line words
         columns: [
           DataColumn(label: Checkbox(
             value: rules.every((r) => r.isSelected),
@@ -213,14 +196,82 @@ class _RuleSelectionScreenState extends State<RuleSelectionScreen> {
             rule.isSelected = val!;
             if (rule.isSelected && rule.knowledgeLevel == 'Removed') rule.knowledgeLevel = 'Not Known';
           }))),
-          DataCell(Text(rule.words, style: const TextStyle(fontWeight: FontWeight.bold))),
-          DataCell(Container(
-            constraints: const BoxConstraints(maxWidth: 600), // Limits width so it doesn't push the table to the edge
-            child: Text(rule.description),
-          )),
+          DataCell(
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12.0),
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 180), // Prevents cutoff on wide word lists
+                child: Text(rule.words, style: const TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            ),
+          ),
+          DataCell(
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12.0),
+              child: Container(
+                constraints: const BoxConstraints(maxWidth: 600),
+                child: Text(rule.description),
+              ),
+            ),
+          ),
           DataCell(_buildStatusBadge(rule.knowledgeLevel)),
         ])).toList(),
       ),
+    );
+  }
+
+  // --- MOBILE LIST (Stacking logic) ---
+  Widget _buildMobileList() {
+    return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: rules.length,
+      itemBuilder: (context, index) {
+        final rule = rules[index];
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 6),
+          child: Card(
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              side: BorderSide(color: Colors.grey.shade200),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Checkbox(
+                        value: rule.isSelected,
+                        onChanged: (val) => setState(() {
+                          rule.isSelected = val!;
+                          if (rule.isSelected && rule.knowledgeLevel == 'Removed') rule.knowledgeLevel = 'Not Known';
+                        }),
+                      ),
+                      Expanded(
+                        child: Text(
+                          rule.words, 
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17)
+                        )
+                      ),
+                      _buildStatusBadge(rule.knowledgeLevel),
+                    ],
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 48, bottom: 5, right: 10),
+                    child: Text(
+                      rule.description, 
+                      style: TextStyle(color: Colors.black.withOpacity(0.7), fontSize: 14)
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -228,7 +279,11 @@ class _RuleSelectionScreenState extends State<RuleSelectionScreen> {
     Color color = level == 'Known' ? Colors.green : level == 'Needs Work' ? Colors.orange : level == 'Removed' ? Colors.red : Colors.black54;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(15), border: Border.all(color: color.withOpacity(0.3))),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1), 
+        borderRadius: BorderRadius.circular(15), 
+        border: Border.all(color: color.withOpacity(0.3))
+      ),
       child: Text(level, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.bold)),
     );
   }
